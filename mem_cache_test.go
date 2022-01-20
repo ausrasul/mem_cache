@@ -138,7 +138,7 @@ func BenchmarkOverwrite(b *testing.B) {
 	}
 }
 
-func BenchmarkRead(b *testing.B) {
+func BenchmarkSerialRead(b *testing.B) {
 	cache := NewCache()
 	cache.Write("c", "a")
 	for i := 0; i < b.N; i++ {
@@ -146,11 +146,44 @@ func BenchmarkRead(b *testing.B) {
 	}
 }
 
-func BenchmarkReadMiss(b *testing.B) {
+func BenchmarkSerialReadMiss(b *testing.B) {
 	cache := NewCache()
 	for i := 0; i < b.N; i++ {
 		cache.Read("c")
 	}
+}
+
+func BenchmarkParallelRead(b *testing.B) {
+	cache := NewCache()
+	cache.Write("c", "a")
+	var wg sync.WaitGroup
+	read := func() {
+		for i := 0; i < 1000; i++ {
+			cache.Read("c")
+		}
+		wg.Done()
+	}
+	for i := 0; i < b.N; i++ {
+		go read()
+		wg.Add(1)
+	}
+	wg.Wait()
+}
+
+func BenchmarkParallelReadMiss(b *testing.B) {
+	cache := NewCache()
+	var wg sync.WaitGroup
+	read := func() {
+		for i := 0; i < 1000; i++ {
+			cache.Read("c")
+		}
+		wg.Done()
+	}
+	for i := 0; i < b.N; i++ {
+		go read()
+		wg.Add(1)
+	}
+	wg.Wait()
 }
 
 func BenchmarkWriteGoMap(b *testing.B) {
@@ -166,16 +199,50 @@ func BenchmarkOverwriteGoMap(b *testing.B) {
 	}
 }
 
-func BenchmarkReadGoMap(b *testing.B) {
+func BenchmarkSerialReadGoMap(b *testing.B) {
 	cache := make(map[string]string)
 	cache["c"] = "a"
 	for i := 0; i < b.N; i++ {
 		_ = cache["c"]
 	}
 }
-func BenchmarkReadMissGoMap(b *testing.B) {
+func BenchmarkSerialReadMissGoMap(b *testing.B) {
 	cache := make(map[string]string)
 	for i := 0; i < b.N; i++ {
 		_ = cache["c"]
 	}
+}
+
+func BenchmarkParallelReadGoMap(b *testing.B) {
+	cache := make(map[string]string)
+	cache["c"] = "a"
+	var wg sync.WaitGroup
+	read := func() {
+		for i := 0; i < 1000; i++ {
+			_ = cache["c"]
+		}
+		wg.Done()
+	}
+	for i := 0; i < b.N; i++ {
+		wg.Add(1)
+		go read()
+	}
+	wg.Wait()
+
+}
+func BenchmarkParallelReadMissGoMap(b *testing.B) {
+	cache := make(map[string]string)
+	var wg sync.WaitGroup
+	read := func() {
+		for i := 0; i < 1000; i++ {
+			_ = cache["c"]
+		}
+		wg.Done()
+	}
+	for i := 0; i < b.N; i++ {
+		wg.Add(1)
+		go read()
+	}
+	wg.Wait()
+
 }
