@@ -3,24 +3,19 @@ package main
 import "sync"
 
 type Cache struct {
-	storage map[string]interface{}
-	mtx     *sync.RWMutex
+	storage sync.Map
 }
 
 func NewCache() Cache {
 	return Cache{
-		storage: make(map[string]interface{}),
-		mtx:     &sync.RWMutex{},
+		storage: sync.Map{},
 	}
 }
 
-func (c Cache) Read(key string) interface{} {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-	return c.storage[key]
+func (c *Cache) Read(key string) interface{} {
+	val, _ := c.storage.Load(key)
+	return val
 }
-func (c Cache) Write(key string, val interface{}) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	c.storage[key] = val
+func (c *Cache) Write(key string, val interface{}) {
+	c.storage.Store(key, val)
 }

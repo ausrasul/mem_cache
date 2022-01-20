@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 // mem cache is initialized with eviction time
@@ -58,6 +59,7 @@ func TestReadWrite(t *testing.T) {
 		if tt.write_it {
 			cache.Write(tt.key, tt.value)
 		}
+		time.Sleep(time.Millisecond)
 		if cache.Read(tt.key) != tt.expect {
 			t.Error(tt.errMsg, cache.Read(tt.key))
 		}
