@@ -83,6 +83,29 @@ func TestConcurrentRead(t *testing.T) {
 	wg.Wait()
 }
 
+func TestConcurrentReadWrite(t *testing.T) {
+	cache := NewCache()
+	var wg sync.WaitGroup
+
+	a := func() {
+		for i := 0; i < 100000; i++ {
+			cache.Write("a", 1)
+		}
+		wg.Done()
+	}
+	b := func() {
+		for i := 0; i < 100000; i++ {
+			cache.Read("a")
+		}
+		wg.Done()
+	}
+	go a()
+	go b()
+	wg.Add(2)
+
+	wg.Wait()
+}
+
 func TestConcurrentWrite(t *testing.T) {
 	cache := NewCache()
 	var wg sync.WaitGroup
@@ -97,31 +120,6 @@ func TestConcurrentWrite(t *testing.T) {
 		go a()
 		wg.Add(1)
 	}
-	wg.Wait()
-}
-
-func TestConcurrentReadWrite(t *testing.T) {
-	cache := NewCache()
-	var wg sync.WaitGroup
-
-	a := func() {
-		for i := 0; i < 1000; i++ {
-			cache.Write("a", 1)
-		}
-		wg.Done()
-	}
-	b := func() {
-		for i := 0; i < 1000; i++ {
-			cache.Read("a")
-		}
-		wg.Done()
-	}
-	for i := 0; i < 10; i++ {
-		go a()
-		go b()
-		wg.Add(2)
-	}
-
 	wg.Wait()
 }
 
